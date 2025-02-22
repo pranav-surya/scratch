@@ -31,6 +31,8 @@ typedef struct {
 Table* TableInit(int cap, int (*GenHash)(TableKey* tk), void (*KeyToString)(TableKey* tk), void (*ValToString)(TableVal* tv), bool (*IsEqual)(TableKey* t1, TableKey* t2));
 void TableFree(Table** t);
 void TableSet(Table* t, TableKey* tk, TableVal* tv);
+void TableRemove(Table* t, TableKey* tk);
+TableVal* TableGet(Table* t, TableKey* tk);
 void TableDisplay(Table* t);
 TableEntry* FindEntry(TableEntry* entries, int cap, TableKey* tk, int (*gh)(TableKey* tk), bool (*ieq)(TableKey* t1, TableKey* t2));
 

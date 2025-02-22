@@ -54,14 +54,16 @@ void TableRealloc(Table* t) {
   TableEntry* newEntries = (TableEntry*)malloc(ms);
   CHECK_OOM(newEntries);
   memset(newEntries, 0, ms);
+  t->len = 0;
   for (int i = 0; i < t->cap; i++) {
     TableEntry* e = &t->entries[i];
-    if (e->key) {
+    if (e->key && e->val) {
       TableEntry* ne = FindEntry(newEntries, newCap, e->key, t->GenHash, t->IsEqual);
       ne->key = e->key;
       ne->val = e->val;
       e->key = NULL;
       e->val = NULL;
+      t->len++;
     }
   }
   FreeTableEntries(&(t->entries), t->cap);
@@ -75,10 +77,15 @@ void TableSet(Table* t, TableKey* tk, TableVal* tv) {
   }
   TableEntry* e = FindEntry(t->entries, t->cap, tk, t->GenHash, t->IsEqual);
   if (e->key) {
-    free(e->key->ptr);
-    free(e->key);
-    free(e->val->ptr);
-    free(e->val);
+    if (e->val) {
+      free(e->key->ptr);
+      free(e->key);
+      free(e->val->ptr);
+      free(e->val);
+    } else {
+      free(e->key->ptr);
+      free(e->key);
+    }
   } else {
     t->len++;
   }
@@ -86,15 +93,42 @@ void TableSet(Table* t, TableKey* tk, TableVal* tv) {
   e->val = tv;
 }
 
+TableVal* TableGet(Table* t, TableKey* tk) {
+  if (!t->len) return NULL;
+  TableEntry* e = FindEntry(t->entries, t->cap, tk, t->GenHash, t->IsEqual);
+  return (e->key) ? e->val : NULL;
+}
+
+void TableRemove(Table* t, TableKey* tk) {
+  if (!t->len) return;
+  TableEntry* e = FindEntry(t->entries, t->cap, tk, t->GenHash, t->IsEqual);
+  if (!e->key) return;
+  free(e->val->ptr);
+  free(e->val);
+  e->val = NULL;
+}
+
 TableEntry* FindEntry(TableEntry* entries, int cap, TableKey* tk, int (*gh)(TableKey* tk), bool (*ieq)(TableKey* t1, TableKey* t2)) {
   int h = gh(tk);
   int i = h%cap;
+  TableEntry* tombstone = NULL;
+  int start = i;
   while (true) {
     TableEntry* e = &entries[i];
-    if (e->key == NULL || ieq(e->key, tk)) {
-      return e;
+    if (e->key) {
+      if (ieq(e->key, tk)) {
+        return e;
+      } else if (!e->val) {
+        tombstone = e;
+      }
+    } else {
+      return (tombstone == NULL) ? e : tombstone;
     }
     i = (i+1)%cap;
+    if (i == start) {
+      printf("Could not find empty bucket!\n");
+      exit(1);
+    }
   }
 }
 
@@ -108,6 +142,9 @@ void TableDisplay(Table* t) {
     printf("[%d]\n", i);
     if (!t->entries[i].key) {
       continue;
+    }
+    if (t->entries[i].key && !t->entries[i].val) {
+      printf("[tombstone]\n");
     }
     t->KeyToString(t->entries[i].key);
     t->ValToString(t->entries[i].val);

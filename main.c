@@ -63,20 +63,28 @@ int GenHash(TableKey* tk) {
 }
 
 void KeyToString(TableKey* tk) {
-	printf("key: %d\n", *(int*)tk->ptr);
+	if (tk == NULL || tk->ptr == NULL) {
+		printf("key: %p\n", NULL);
+	} else {
+		printf("key: %d\n", *(int*)tk->ptr);
+	}
 }
 
 void ValToString(TableVal* tv) {
-	printf("val: %d\n", *(int*)tv->ptr);
+	if (tv == NULL || tv->ptr == NULL) {
+		printf("val: %p\n", NULL);
+	} else {
+		printf("val: %d\n", *(int*)tv->ptr);
+	}
 }
 
 bool IsEqual(TableKey* t1, TableKey* t2) {
 	return *(int*)(t1->ptr) == *(int*)(t2->ptr);
 }
 
-int main() {
+int TableTest() {
 	srand(time(NULL));
-	Table* t = TableInit(1, GenHash, KeyToString, ValToString, IsEqual);
+	Table* t = TableInit(20, GenHash, KeyToString, ValToString, IsEqual);
 
 	int *a, *b;
 	TableKey* tk;
@@ -85,7 +93,8 @@ int main() {
 	for (int i = 0; i < 20; i++) {
 		a = (int*)malloc(sizeof(int));
 		CHECK_OOM(a);
-		*a = rand() % 1000;
+		// *a = rand() % 1000;
+		*a = i+1;
 
 		tk = (TableKey*)malloc(sizeof(TableKey));
 		CHECK_OOM(tk);
@@ -93,15 +102,96 @@ int main() {
 
 		b = (int*)malloc(sizeof(int));
 		CHECK_OOM(b);
-		*b = rand() % 1000;
+		// *b = rand() % 1000;
+		*b = (i+1)*10;
 
 		tv = (TableVal*)malloc(sizeof(TableVal));
 		CHECK_OOM(tv);
 		tv->ptr = b;
 		TableSet(t, tk, tv);
 	}
-
 	TableDisplay(t);
+
+	for (int i = 0; i < 20; i++) {
+		a = (int*)malloc(sizeof(int));
+		CHECK_OOM(a);
+		// *a = rand() % 1000;
+		*a = i+1;
+
+		tk = (TableKey*)malloc(sizeof(TableKey));
+		CHECK_OOM(tk);
+		tk->ptr = a;
+
+		b = (int*)malloc(sizeof(int));
+		CHECK_OOM(b);
+		// *b = rand() % 1000;
+		*b = (i+1)*100;
+
+		tv = (TableVal*)malloc(sizeof(TableVal));
+		CHECK_OOM(tv);
+		tv->ptr = b;
+		TableSet(t, tk, tv);
+	}
+	TableDisplay(t);
+
+	for (int i = 0; i < 20; i++) {
+		a = (int*)malloc(sizeof(int));
+		CHECK_OOM(a);
+		// *a = rand() % 1000;
+		*a = i+1;
+
+		tk = (TableKey*)malloc(sizeof(TableKey));
+		CHECK_OOM(tk);
+		tk->ptr = a;
+
+		TableRemove(t, tk);
+		free(tk->ptr);
+		free(tk);
+	}
+	TableDisplay(t);
+
+	for (int i = 0; i < 20; i++) {
+		a = (int*)malloc(sizeof(int));
+		CHECK_OOM(a);
+		// *a = rand() % 1000;
+		*a = i+1;
+
+		tk = (TableKey*)malloc(sizeof(TableKey));
+		CHECK_OOM(tk);
+		tk->ptr = a;
+
+		b = (int*)malloc(sizeof(int));
+		CHECK_OOM(b);
+		// *b = rand() % 1000;
+		*b = (i+1)*100;
+
+		tv = (TableVal*)malloc(sizeof(TableVal));
+		CHECK_OOM(tv);
+		tv->ptr = b;
+		TableSet(t, tk, tv);
+	}
+	TableDisplay(t);
+
+	for (int i = 0; i < 20; i++) {
+		a = (int*)malloc(sizeof(int));
+		CHECK_OOM(a);
+		// *a = rand() % 1000;
+		*a = i+1;
+
+		tk = (TableKey*)malloc(sizeof(TableKey));
+		CHECK_OOM(tk);
+		tk->ptr = a;
+
+		TableVal* tv = TableGet(t, tk);
+		free(tk->ptr);
+		free(tk);
+	}
+	TableDisplay(t);
+
 	TableFree(&t);
 	TableDisplay(t);
+}
+
+int main() {
+	return 0;
 }
